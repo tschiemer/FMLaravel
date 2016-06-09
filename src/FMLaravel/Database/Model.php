@@ -217,11 +217,11 @@ abstract class Model extends Eloquent
         } // special treatment of repetition fields
         elseif ($this->isRepetitionField($key) || is_int($repetition)) {
             // first make sure the target attribute is an array
-            if (empty($this->attributes[$key]) || is_array($this->attributes[$key])) {
+            if (empty($this->attributes[$key]) || !is_array($this->attributes[$key])) {
                 $this->attributes[$key] = [];
             }
             if (is_array($value)) {
-                $this->attributes[$key] = array_merge($this->attributes[$key], $value);
+                $this->attributes[$key] = array_replace($this->attributes[$key], $value);
             } elseif (is_int($repetition)) {
                 $this->attributes[$key][$repetition] = $value;
             }
