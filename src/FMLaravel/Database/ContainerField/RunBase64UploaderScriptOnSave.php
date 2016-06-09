@@ -57,11 +57,11 @@ trait RunBase64UploaderScriptOnSave
 
         // for each of the passed container fields
         array_walk($values, function (ContainerField $cf, $k) use ($record) {
-            $cf->didSaveToServer($record->$k);
+            $cf->didSaveToServer($record[$k]);
         });
 
         $meta = (array)$this->getFileMakerMetaData();
-        $meta = array_merge($meta, (array)$record->{$this->getFileMakerMetaKey()});
+        $meta = array_merge($meta, (array)$record[$this->getFileMakerMetaKey()]);
         $this->setFileMakerMetaDataArray($meta);
     }
 }

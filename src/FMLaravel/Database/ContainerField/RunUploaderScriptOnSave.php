@@ -53,7 +53,7 @@ trait RunUploaderScriptOnSave
         });
 
         $meta = (array)$this->getFileMakerMetaData();
-        $meta = array_merge($meta, (array)$record->{$this->getFileMakerMetaKey()});
+        $meta = array_merge($meta, (array)$record[$this->getFileMakerMetaKey()]);
         $this->setFileMakerMetaDataArray($meta);
 
 
