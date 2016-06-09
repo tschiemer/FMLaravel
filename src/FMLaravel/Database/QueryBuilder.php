@@ -2,6 +2,8 @@
 
 use FMLaravel\Database\ContainerField\ContainerField;
 use FMLaravel\Database\Model;
+use FMLaravel\Database\Helpers;
+
 use Illuminate\Database\Query\Builder;
 //use Illuminate\Database\Eloquent\Builder;
 use \stdClass;
@@ -196,7 +198,7 @@ class QueryBuilder extends Builder
                 if ($where['operator'] == 'like') {
                     $whereValue = $where['value'];
                 } else {
-                    $whereValue = $where['operator'] . $this->escapeString($where['value']);
+                    $whereValue = $where['operator'] . Helpers::escape($where['value']);
                 }
                 $find->AddFindCriterion(
                     $where['column'],
@@ -206,19 +208,7 @@ class QueryBuilder extends Builder
         }
     }
 
-    protected function escapeString($str)
-    {
-        $map = [
-            '@'     => '\@',
-            '#'     => '\#',
-            '?'     => '\?',
-            '""'    => '\"\"',
-            '*'     => '\*',
-            '//'    => '\/\/'
-        ];
 
-        return str_replace(array_keys($map), array_values($map), $str); //'/(@|#|\*|\?)/', '\\\$1', $str);
-    }
 
     public function setRange()
     {
