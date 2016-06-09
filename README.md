@@ -1,3 +1,8 @@
+
+**Please note** that this is a development fork of FMLaravel and ideally the original repository will implement any or all of these features. For organizational reasons it has not been pulled as of yet.
+ So please also check on its status, because maybe it's now more advanced.
+
+
 # FMLaravel
 
 This package adds an Laravel compatible abstraction of the Filemaker API that gives you the following features to use:
@@ -6,10 +11,6 @@ This package adds an Laravel compatible abstraction of the Filemaker API that gi
  - Run Filemaker scripts (on the Filemaker Server)
  - Authenticate user credentials against Filemaker Server users
  - Easy access to raw Filemaker PHP API using laravel supplied configuration settings (if needed)
-
-
-*Please note* that this is a development fork of FMLaravel and ideally the original repository will implement any or all of these features. For organizational reasons it has not been pulled as of yet.
- So please also check on its status, because maybe it's now more advanced.
 
 # Todo
 
