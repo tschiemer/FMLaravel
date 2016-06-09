@@ -53,7 +53,8 @@ In config/database.php add the following to the connections array:
             'password' => env('DB_PASSWORD'),
             'logLevel' => false,                     // possible values: false, 'error', 'info', 'debug'
 
-    //        'cacheStore' => 'file',               // override default filemaker cache store settings
+    //            'properties' => [],               // override/feed any settings to the filemaker engine @see class FileMaker
+    //            'cacheStore' => 'file',           // override default filemaker cache store settings
     //            'read'     => [],                 // override settings for read operations
     //            'write'    => [],                 // override settings for write operations
     //            'script'   => []                  // override settings for script operations
@@ -231,6 +232,73 @@ By default the layout you set on the $layoutName property of your model will be 
 	//will use the PastDue layout to perform the query
 	$tasks = Task::where('task_name', 'Go to the store')->setLayout('PastDue')->get();
 
+##### Query operators
+
+The default query operator is the FileMaker field match operator `==`.
+To use a different please specify it as follows:
+
+    $tasks = Task::where('priority', '>', 5)->get();
+
+The possible operators are as follows with the semantics as defined by FileMaker:
+
+    '=', '==', '<', '>', '<=', '>=', '<>', '!','~', '""', '*""', 'like'
+
+All search arguments passed to any of these operators - with exception of `like` - are automatically escaped with regard to FileMaker's special search strings (#, @, *, \, \, //, "").
+In case you want to supply a custom/raw search using any of those operators you can use the `like` query operator which requires you to escape any search strings yourself. You would be doing this as follows:
+
+    use FMLaravel\Database\Helpers;
+
+    $tasks = Task::where('task_name', 'like', Helpers::escape($search) . '-@#')->get();
+
+
+##### Related records/models
+
+It is also possible to load any related records as displayed on the model layout used to retrieve the model (ex. through portals). Extend your models as exemplified in the following:
+
+    //
+    protected $relatedRecordsInfo = [
+        'assignees' => [
+            'table' => 'FileMakerTableReference', // as set in your FM database's Relationship view
+            'class' => Assignees::class     // model class used to represent the related records
+        ],
+        'project' => [
+            'table' => 'task_projects',
+            'class' => Projects::class
+         ]
+    ];
+
+
+    public function assignees()
+    {
+        return $this->relatedRecords('assignees', 'many'); // the to many relationship is the default
+    }
+
+    public function project()
+    {
+        return $this->relatedRecords('project', 'one'); // a to-one relationship
+    }
+
+You can retrieve related records as you normally would, also eager loading is possible:
+
+    // eager loading of assignees
+    $task = Task::with('assignees')->first();
+
+    // eager loading of assignees and project
+    $task = Task::with(['assignees', 'project'])->first();
+
+    // Lazy
+    $task = Task::first();
+
+    // Accessing related models
+    do($task->assignees);
+    do($task->project);
+
+Please be aware that FileMaker result sets automatically contain related record sets which leads to two different behaviours to retrieve related records:
+if the related records are loaded eagerly, they are also extracted from the original model query without the need for an additional query to the server; on the other hand, if the related records are loaded lazily, a new request to the server is necessary.
+
+_NOTE_ that any save operations on related records are done using the configuration as given in the model class (ie using its layout and primary key).
+
+_SECOND NOTE_ related record set operations (adding, removing records) is currently *not* supported (FileMaker operations, add/delete portal row). This is a feature for the future.
 
 #### Inserting, updating and deleting models
 
