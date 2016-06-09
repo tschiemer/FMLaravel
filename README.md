@@ -1,5 +1,6 @@
 
-**Please note** that this is a development fork of FMLaravel and ideally the original repository will implement any or all of these features. For organizational reasons it has not been pulled as of yet.
+**Please note**
+this is a development fork of FMLaravel and ideally the original repository will implement any or all of these features. For organizational reasons it has not been pulled as of yet.
  So please also check on its status, because maybe it's now more advanced.
 
 
@@ -35,14 +36,9 @@ Once Composer finishes the instalation you will need to give Laravel write acces
 
 ## Installing FMLaravel
 
-In your text editor open composer.json and add the following line to the "require" section of the file.  This will tell Composer that your project requires FMLaravel.
+Run the following terminal command to install this fork of FMLaravel
 
-	"andrewmile/fm-laravel": "0.3.*"
-
-Run the following command in terminal to install FMLaravel
-
-	composer update
-
+	composer require tschiemer/fm-laravel
 
 Back in your text editor open config/app.php and add the following line to the providers array:
 
@@ -80,6 +76,9 @@ Note that if you are using version control you do not want the .env file to be a
 In case you want to use your Filemaker server as the default (or only) model source, change the default connection type to `filemaker` in `config/database.php`:
 
 	'default' => 'filemaker',
+
+
+You might run into an error message as also mentioned in https://github.com/andrewmile/FMLaravel/issues/1#issuecomment-213443303 where you'll also find a quickfix.
 
 
 
