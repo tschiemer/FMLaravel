@@ -1,5 +1,6 @@
 <?php namespace FMLaravel\Database;
 
+use App\Models\Helfer\Teilnahmen;
 use FMLaravel\Database\ContainerField\ContainerField;
 use FMLaravel\Database\Model;
 use FMLaravel\Database\Helpers;
@@ -193,7 +194,7 @@ class QueryBuilder extends Builder
                 $find->add($this->compoundWhere, $request);
                 $this->compoundWhere++;
             } elseif ($where['type'] == 'Nested') {
-                    $this->parseWheres($where['query']->wheres, $find, $find_type);
+                $this->parseWheres($where['query']->wheres, $find, $find_type);
             } else {
                 if ($where['operator'] == 'like') {
                     $whereValue = $where['value'];
@@ -302,7 +303,7 @@ class QueryBuilder extends Builder
             // because setRawAttributes overwrites the whole array, we have to save the meta data before.
             $meta = (array)$this->model->getFileMakerMetaData();
 
-            $this->model->setRawAttributes($this->recordExtractor->extractRecordFields($record));
+            $this->model->setRawAttributes($record->getAllFields());
 
             $meta[Model::FILEMAKER_MODIFICATION_ID] = $record->getModificationId();
             $this->model->setFileMakerMetaDataArray($meta);
@@ -355,7 +356,7 @@ class QueryBuilder extends Builder
 
         $record = reset($result->getRecords());
 
-        $this->model->setRawAttributes($this->recordExtractor->extractRecordFields($record));
+        $this->model->setRawAttributes($record->getAllFields());
 
         $meta = [
             Model::FILEMAKER_RECORD_ID            => $record->getRecordId(),
