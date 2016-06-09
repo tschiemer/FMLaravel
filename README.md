@@ -237,6 +237,39 @@ By default the layout you set on the $layoutName property of your model will be 
 	//will use the PastDue layout to perform the query
 	$tasks = Task::where('task_name', 'Go to the store')->setLayout('PastDue')->get();
 
+##### Repitition fields
+
+Repetition fields are returned as numerically indexed arrays if and only if there is more than one field repetition is given on the model's layout. To properly use repetition fields you will have to define all those fields on your model, as follows:
+
+    // list your repetition fields in this array
+    protected $repetitionFields = ['categories'];
+
+Values of repetition fields are numerically indexed arrays. Imagine an example where each task has repetition fields for categories:
+
+    $task = Task::first();
+    dd($task->categories);
+
+would output:
+
+    array:5 [
+      0 => "Urgent"
+      1 => "Support"
+      2 => ""
+      3 => ""
+      4 => ""
+    ]
+
+And if you want to set any repetitions you have the following options:
+
+    // set a specific repetition
+    $task->setAttribute('categories', 'Not urgent anymore', 0);
+
+    // set a specific repetition
+    $task->categories = [0 => 'Not urgent anymore'];
+
+Please note that in the second case only the repetitions are overwritten which are specified, any other repetitions remain unchanged.
+
+
 ##### Query operators
 
 The default query operator is the FileMaker field match operator `==`.
