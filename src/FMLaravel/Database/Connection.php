@@ -66,6 +66,14 @@ class Connection extends BaseConnection
             $config['password']
         );
 
+        $fm->setProperty('recordClass', \FMLaravel\Database\FileMaker\Record::class);
+
+        if (array_key_exists('properties', $config) && is_array($config['properties'])) {
+            foreach ($config['properties'] as $key => $value) {
+                $fm->setProperty($key, $value);
+            }
+        }
+
         if (array_key_exists('logger', $config) && $config['logger'] instanceof LogFacade) {
             $config['logger']->attachTo($fm);
         } elseif (array_key_exists('logLevel', $config)) {
@@ -123,5 +131,36 @@ class Connection extends BaseConnection
     public function listLayouts()
     {
         return $this->filemaker('read')->listLayouts();
+    }
+
+    /**
+     * Returns a Layout object that describes the specified layout.
+     *
+     * @param string $layout Name of the layout to describe.
+     *
+     * @return FileMaker_Layout|FileMaker_Error Layout or Error object.
+     */
+    public function getLayout($layoutName)
+    {
+        return $this->filemaker('read')->getLayout($layoutName);
+    }
+
+
+    /**
+     * Returns the list of defined values in the specified value list.
+     *
+     * @param string $valueList Name of value list.
+     * @param string  $recid Record from which the value list should be
+     *        displayed.
+     *
+     * @return array List of defined values.
+
+     * @deprecated Use getValueListTwoFields instead.
+
+     * @see getValueListTwoFields
+     */
+    public function getValueList($layoutName, $valueListName, $recId = null)
+    {
+        return $this->filemaker('read')->getLayout($layoutName)->getValueList($valueListName, $recId);
     }
 }

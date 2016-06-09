@@ -165,7 +165,7 @@ class ContainerField
                         // if cache is enabled, check it first, and possibly retrieve server
                         if ($this->isCachable()) {
                             $key = $this->getCacheKey();
-                            $store = $this->model->getContainerFieldCacheStore();
+                            $store = $this->model->getContainerFieldsCacheStore($this);
 
                             if ($store->has($key)) {
                                 $this->container['data'] = $store->get($key);
@@ -252,7 +252,7 @@ class ContainerField
     public function getCacheKey()
     {
         if (array_key_exists('url', $this->container)) {
-            $cacheKey = $this->model->getContainerFieldCacheKeyFormat($this);
+            $cacheKey = $this->model->getContainerFieldsCacheKeyFormat($this);
             $cacheKey = str_replace(':field', $this->key, $cacheKey);
             $cacheKey = str_replace(':filename', $this->container['filename'], $cacheKey);
             $cacheKey = str_replace(':url', $this->container['url'], $cacheKey);
@@ -278,8 +278,8 @@ class ContainerField
     public function isCachable()
     {
         return $this->origin == 'server'
-        && 0 < $this->model->getContainerFieldCacheTime()
-        && !empty($this->getCacheKey());
+                && 0 < $this->model->getContainerFieldsCacheTime()
+                && !empty($this->getCacheKey());
     }
 
     protected function saveToCache()
@@ -301,10 +301,10 @@ class ContainerField
             default:
                 throw new Exception("origin not supported {$this->origin}");
         }
-        $this->model->getContainerFieldCacheStore()->put(
+        $this->model->getContainerFieldsCacheStore($this)->put(
             $this->getCacheKey(),
             $data,
-            $this->model->getContainerFieldCacheTime()
+            $this->model->getContainerFieldsCacheTime()
         );
     }
 }

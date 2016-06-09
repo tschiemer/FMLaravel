@@ -1,61 +1,109 @@
 <?php namespace FMLaravel\Database;
 
+use FMLaravel\Database\FileMaker\Record;
+use FMLaravel\Database\FileMaker\RecordInterface;
 use FMLaravel\Database\Model;
 use FileMaker;
+use FileMaker_Result;
 
 class RecordExtractor
 {
 
     protected $metaKey;
+    protected $relatedRecordsInfo;
+    protected $eagerLoad = [];
 
-    public function __construct($metaKey)
+    public function __construct($metaKey, $relatedRecordsInfo = [])
     {
         $this->metaKey = $metaKey;
+        $this->relatedRecordsInfo = $relatedRecordsInfo;
     }
 
+    /** Shortcut-Instantiator for defined model classes
+     * @param $model
+     * @return RecordExtractor
+     * @throws \Exception
+     */
     public static function forModel($model)
     {
         if (is_string($model)) {
             $model = new $model();
         }
+
         if (!($model instanceof Model)) {
             throw new \Exception("Model is not a FMLaravel\\Data\\Model class!");
         }
-        return new RecordExtractor($model->getFileMakerMetaKey());
+
+        return new RecordExtractor($model->getFileMakerMetaKey(), $model->getRelatedRecordsInfo());
     }
 
-    /**
-     * @param $result Result as returned from filemaker command
+    /** Set list of related records to load.
+     * @param array $eagerLoad
+     * @return $this
+     */
+    public function setEagerLoad(array $eagerLoad = [])
+    {
+        $this->eagerLoad = $eagerLoad;
+        return $this;
+    }
+
+    /** Processes FileMaker Result
+     * @param FileMaker_Result|\FileMaker_Error $result Result as returned from filemaker command
      * @return array
      */
     public function processResult($result)
     {
-        $rows = [];
-
-        if (!FileMaker::isError($result) && $result->getFetchCount() > 0) {
-            foreach ($result->getRecords() as $record) {
-                $row = $this->extractRecordFields($record);
-
-                $row[$this->metaKey] = (object)[
-                    Model::FILEMAKER_RECORD_ID          => $record->getRecordId(),
-                    Model::FILEMAKER_MODIFICATION_ID    => $record->getModificationId()
-                ];
-
-                $rows[] = (object)$row;
-            }
+        if (FileMaker::isError($result) || $result->getFetchCount() == 0) {
+            return [];
         }
 
-        return $rows;
+        return $this->processArray($result->getRecords());
     }
 
-    public function extractRecordFields($record)
+    /** Processes array of FileMaker records.
+     * @param array $records
+     * @return array
+     */
+    public function processArray(array $records)
     {
-        $attributes = [];
-        foreach ($record->getFields() as $field) {
-            if ($field) {
-                $attributes[$field] = $record->getField($field);
-            }
-        }
-        return $attributes;
+        return array_map(function (RecordInterface $record) {
+
+            $row = $record->getAllFields();
+
+            $meta = [
+                Model::FILEMAKER_RECORD_ID          => $record->getRecordId(),
+                Model::FILEMAKER_MODIFICATION_ID    => $record->getModificationId(),
+                Model::FILEMAKER_RELATED_RECORDS    => array_combine(
+                    $this->eagerLoad,
+                    array_map(function ($relation) use ($record) {
+
+                        $info = $this->relatedRecordsInfo[$relation];
+
+                        $array = $record->getRelatedSet($info['table']);
+
+                        $extractor = self::forModel($info['class']);
+
+                        return $extractor->processArray($array);
+
+                    }, $this->eagerLoad)
+                )
+            ];
+
+            $row[$this->metaKey] = (object)$meta;
+
+            return $row;
+        }, $records);
     }
+
+// This method become obsolete when the use of RecordInterface was introduced.
+//    public function extractRecordFields($record)
+//    {
+//        $attributes = [];
+//        foreach ($record->getFields() as $field) {
+//            if ($field) {
+//                $attributes[$field] = $record->getFieldUnencoded($field);
+//            }
+//        }
+//        return $attributes;
+//    }
 }

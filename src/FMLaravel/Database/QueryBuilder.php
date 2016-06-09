@@ -3,12 +3,18 @@
 use FMLaravel\Database\ContainerField\ContainerField;
 use FMLaravel\Database\Model;
 use Illuminate\Database\Query\Builder;
+//use Illuminate\Database\Eloquent\Builder;
 use \stdClass;
 use FileMaker;
 use Exception;
+use Illuminate\Support\Str;
 
 class QueryBuilder extends Builder
 {
+    protected $operators = [
+        '=', '==', '<', '>', '<=', '>=', '<>', '!',
+        '~', '""', '*""', 'like'
+    ];
 
     /**
      * @var Model
@@ -35,6 +41,13 @@ class QueryBuilder extends Builder
         $this->model = $model;
 
         $this->recordExtractor = RecordExtractor::forModel($model);
+
+        return $this;
+    }
+
+    public function setEagerLoad($eagerLoad = [])
+    {
+        $this->recordExtractor->setEagerLoad($eagerLoad);
 
         return $this;
     }
@@ -81,6 +94,90 @@ class QueryBuilder extends Builder
         return $this;
     }
 
+
+    /** Where statement
+     *
+     * NOTE
+     * This is pretty much a copy of the original/parent where method, but the default operator (=) was replaced
+     * with the semantically identical operator (==)
+     *
+     * NOTE 2
+     * There are effectively more where clauses that use the normal = as default operator. Ideally we should change
+     * this everywhere. Well, it's a bit unfortunate that Builder does not have a property for the default operator.
+     *
+     * @todo simplify as far as possible (strip unsupported functionality)
+     *
+     * @param array|\Closure|string $column
+     * @param null $operator
+     * @param null $value
+     * @param string $boolean
+     * @return $this|Builder|static
+     */
+    public function where($column, $operator = null, $value = null, $boolean = 'and')
+    {
+        // If the column is an array, we will assume it is an array of key-value pairs
+        // and can add them each as a where clause. We will maintain the boolean we
+        // received when the method was called and pass it into the nested where.
+        if (is_array($column)) {
+            return $this->addArrayOfWheres($column, $boolean);
+        }
+
+        // Here we will make some assumptions about the operator. If only 2 values are
+        // passed to the method, we will assume that the operator is an equals sign
+        // and keep going. Otherwise, we'll require the operator to be passed in.
+        if (func_num_args() == 2) {
+            list($value, $operator) = [$operator, '='];
+        } elseif ($this->invalidOperatorAndValue($operator, $value)) {
+            throw new InvalidArgumentException('Illegal operator and value combination.');
+        }
+
+        // If the columns is actually a Closure instance, we will assume the developer
+        // wants to begin a nested where statement which is wrapped in parenthesis.
+        // We'll add that Closure to the query then return back out immediately.
+        if ($column instanceof Closure) {
+            return $this->whereNested($column, $boolean);
+        }
+
+        // If the given operator is not found in the list of valid operators we will
+        // assume that the developer is just short-cutting the '=' operators and
+        // we will set the operators to '=' and set the values appropriately.
+        if (! in_array(strtolower($operator), $this->operators, true) &&
+            ! in_array(strtolower($operator), $this->grammar->getOperators(), true)) {
+            list($value, $operator) = [$operator, '=='];
+        }
+
+        // If the value is a Closure, it means the developer is performing an entire
+        // sub-select within the query and we will need to compile the sub-select
+        // within the where clause to get the appropriate query record results.
+        if ($value instanceof Closure) {
+            return $this->whereSub($column, $operator, $value, $boolean);
+        }
+
+        // If the value is "null", we will just assume the developer wants to add a
+        // where null clause to the query. So, we will allow a short-cut here to
+        // that method for convenience so the developer doesn't have to check.
+        if (is_null($value)) {
+            return $this->whereNull($column, $boolean, $operator != '==');
+        }
+
+        // Now that we are working with just a simple query we can put the elements
+        // in our array and add the query binding to our array of bindings that
+        // will be bound to each SQL statements when it is finally executed.
+        $type = 'Basic';
+
+        if (Str::contains($column, '->') && is_bool($value)) {
+            $value = new Expression($value ? 'true' : 'false');
+        }
+
+        $this->wheres[] = compact('type', 'column', 'operator', 'value', 'boolean');
+
+        if (! $value instanceof Expression) {
+            $this->addBinding($value, 'where');
+        }
+
+        return $this;
+    }
+
     private function parseWheres($wheres, $find, $find_type)
     {
         if (!$wheres) {
@@ -93,17 +190,34 @@ class QueryBuilder extends Builder
                 $this->parseWheres([$where], $request, 'basic');
                 $find->add($this->compoundWhere, $request);
                 $this->compoundWhere++;
-            } else {
-                if ($where['type'] == 'Nested') {
+            } elseif ($where['type'] == 'Nested') {
                     $this->parseWheres($where['query']->wheres, $find, $find_type);
+            } else {
+                if ($where['operator'] == 'like') {
+                    $whereValue = $where['value'];
                 } else {
-                    $find->AddFindCriterion(
-                        $where['column'],
-                        $where['operator'] . $where['value']
-                    );
+                    $whereValue = $where['operator'] . $this->escapeString($where['value']);
                 }
+                $find->AddFindCriterion(
+                    $where['column'],
+                    $whereValue
+                );
             }
         }
+    }
+
+    protected function escapeString($str)
+    {
+        $map = [
+            '@'     => '\@',
+            '#'     => '\#',
+            '?'     => '\?',
+            '""'    => '\"\"',
+            '*'     => '\*',
+            '//'    => '\/\/'
+        ];
+
+        return str_replace(array_keys($map), array_values($map), $str); //'/(@|#|\*|\?)/', '\\\$1', $str);
     }
 
     public function setRange()
