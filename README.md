@@ -34,11 +34,21 @@ Once Composer finishes the instalation you will need to give Laravel write acces
 
 	chmod -R 777 storage
 
-## Installing FMLaravel
+## Installing FMLaravel (this fork)
+
+Add the following lines to your `composer.json`
+
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/tschiemer/FMLaravel"
+        }
+    ],
 
 Run the following terminal command to install this fork of FMLaravel
 
-	composer require tschiemer/fm-laravel
+	composer require tschiemer/fm-laravel:0.4.0-beta
+
 
 Back in your text editor open config/app.php and add the following line to the providers array:
 
