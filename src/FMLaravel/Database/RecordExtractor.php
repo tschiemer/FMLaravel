@@ -84,6 +84,11 @@ class RecordExtractor
                         $extractor = self::forModel($info['class']);
 
                         if (FileMaker::isError($array)) {
+                            // If there is not yet any related record, the FileMaker API returns an error,
+                            // which does not have a specific code set but only a message.
+                            // Sadly this case is indistuingishable from a record not have the given relation at all
+                            // The design decision here is that this error does not throw an exception, but just
+                            // returns an empty set of related records.
                             throw FileMakerException::newFromError($array);
                         }
 

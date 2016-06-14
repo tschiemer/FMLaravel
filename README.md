@@ -344,9 +344,11 @@ You can retrieve related records as you normally would, also eager loading is po
 Please be aware that FileMaker result sets automatically contain related record sets which leads to two different behaviours to retrieve related records:
 if the related records are loaded eagerly, they are also extracted from the original model query without the need for an additional query to the server; on the other hand, if the related records are loaded lazily, a new request to the server is necessary.
 
-_NOTE_ that any save operations on related records are done using the configuration as given in the model class (ie using its layout and primary key).
+__NOTE__ that any save operations on related records are done using the configuration as given in the model class (ie using its layout and primary key).
 
-_SECOND NOTE_ related record set operations (adding, removing records) is currently *not* supported (FileMaker operations, add/delete portal row). This is a feature for the future.
+__SECOND NOTE__ related record set operations (adding, removing records) is currently *not* supported (FileMaker operations, add/delete portal row). This is a feature for the future.
+
+__THIRD NOTE__ when setting up related records you MUST make sure to use the correct table name (which is the name of the related table). If you do not specify this correctly, you will NOT get an error but just an empty record set. This is because the FileMaker API treats a request to a non-existing set the identically to a request to an empty but valid set.
 
 #### Inserting, updating and deleting models
 
