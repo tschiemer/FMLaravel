@@ -47,7 +47,7 @@ Add the following lines to your `composer.json`
 
 Run the following terminal command to install this fork of FMLaravel
 
-	composer require tschiemer/fm-laravel:0.4.1-beta
+	composer require tschiemer/fm-laravel
 
 
 Back in your text editor open config/app.php and add the following line to the providers array:
