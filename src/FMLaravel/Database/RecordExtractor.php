@@ -89,6 +89,9 @@ class RecordExtractor
                             // Sadly this case is indistuingishable from a record not have the given relation at all
                             // The design decision here is that this error does not throw an exception, but just
                             // returns an empty set of related records.
+                            if (strpos($array->getMessage(), 'Related set "'.$info['table'].'" not present.') == 0) {
+                                return [];
+                            }
                             throw FileMakerException::newFromError($array);
                         }
 
