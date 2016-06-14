@@ -83,6 +83,10 @@ class RecordExtractor
 
                         $extractor = self::forModel($info['class']);
 
+                        if (FileMaker::isError($array)) {
+                            throw FileMakerException::newFromError($array);
+                        }
+
                         return $extractor->processArray($array);
 
                     }, $this->eagerLoad)
