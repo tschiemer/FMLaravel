@@ -17,8 +17,8 @@
 	],
     "require": {
         "php": ">=5.4.0",
-        "illuminate/support": "5.2.*",
-        "illuminate/database": "5.2.*",
+        "illuminate/support": "5.4.*",
+        "illuminate/database": "5.4.*",
         "andrewmile/fm-api": "0.1.2"
     },
     "require-dev": {
